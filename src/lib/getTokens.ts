@@ -18,7 +18,11 @@ export async function updateTokenData(
   }
 }
 
-export default async function getTokens(api: ApiPromise) {
+export default async function getTokens(
+  api: ApiPromise,
+  enabled: Enabled
+): Promise<void> {
+  console.log("get tokens info");
   api?.rpc.system.properties((data) => {
     const tokenSymbol = data.tokenSymbol.unwrap().map((a) => a.toString());
     const tokenDecimals = data.tokenDecimals.unwrap().map((a) => a.toNumber());
@@ -38,5 +42,6 @@ export default async function getTokens(api: ApiPromise) {
         info
       );
     });
+    enabled.statusCrawler = true;
   });
 }

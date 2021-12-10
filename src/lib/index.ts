@@ -5,6 +5,7 @@ import getTokens from "./getTokens";
 import getTokenPairsAndStatusesCrawler from "./getTokenPairsAndStatusesCrawler";
 import getTokenPairsLiquidityCrawler from "./getTokenPairsLiquidityCrawler";
 import getTokenPricesCrawler from "./getTokenPricesCrawler";
+import getLPYieldsCrawler from "./getLPYieldsCrawler";
 
 async function getApiProvider(): Promise<ApiPromise> {
   const wsProviderUrl = config.wsProviderUrl;
@@ -36,8 +37,26 @@ async function getApiProvider(): Promise<ApiPromise> {
 export default async function startSubscriptions() {
   const api = await getApiProvider();
 
-  await getTokens(api);
-  getTokenPairsAndStatusesCrawler(api);
-  getTokenPairsLiquidityCrawler(api);
-  getTokenPricesCrawler();
+  const enabled: Enabled = {
+    statusCrawler: false,
+    liquidityCrawler: false,
+    pricesCrawler: false,
+    yieldsCrawler: false,
+  };
+
+  await getTokens(api, enabled);
+
+  // const incentives = await api.query.incentives.incentiveRewardAmounts(
+  //   {
+  //     Dex: { DexShare: [{ TOKEN: "KAR" }, { TOKEN: "KSM" }] },
+  //   },
+  //   { TOKEN: "KAR" }
+  // );
+
+  // console.log(incentives.toHuman());
+
+  getTokenPairsAndStatusesCrawler(api, enabled);
+  getTokenPairsLiquidityCrawler(api, enabled);
+  getTokenPricesCrawler(enabled);
+  getLPYieldsCrawler(api, enabled);
 }

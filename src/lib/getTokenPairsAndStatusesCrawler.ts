@@ -10,7 +10,7 @@ interface Filter {
   symbol: string;
 }
 
-async function updateTokenPairsData(
+export async function updateTokenPairsData(
   filter: Filter,
   data: TokenPairs
 ): Promise<void> {
@@ -22,7 +22,11 @@ async function updateTokenPairsData(
   }
 }
 
-async function getTokenPairsAndStatuses(api: ApiPromise) {
+async function getTokenPairsAndStatuses(
+  api: ApiPromise,
+  enabled: Enabled
+): Promise<void> {
+  console.log("get token pairs and status info");
   const tradingPairStatuses =
     await api?.query.dex.tradingPairStatuses.entries();
 
@@ -42,11 +46,15 @@ async function getTokenPairsAndStatuses(api: ApiPromise) {
       }
     );
   });
+  enabled.liquidityCrawler = true;
 }
 
-export default async function getTokenPairsAndStatusesCrawler(api: ApiPromise) {
+export default async function getTokenPairsAndStatusesCrawler(
+  api: ApiPromise,
+  enabled: Enabled
+): Promise<void> {
   while (true) {
-    await getTokenPairsAndStatuses(api);
-    await wait(50000);
+    enabled.statusCrawler && (await getTokenPairsAndStatuses(api, enabled));
+    await wait(20000);
   }
 }

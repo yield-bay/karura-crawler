@@ -8,6 +8,9 @@ const schema = new Schema<TokenPairs>(
     status: { type: String, required: true },
     token1Liquidity: { type: String },
     token2Liquidity: { type: String },
+    tvlUSD: { type: Number },
+    incentives: [{ token: String, value: String }],
+    dailyAPR: { type: Number },
   },
   { timestamps: true }
 );

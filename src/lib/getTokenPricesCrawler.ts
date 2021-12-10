@@ -7,7 +7,8 @@ interface TokensObj {
   [key: string]: Token;
 }
 
-async function getTokenPrices() {
+async function getTokenPrices(enabled: Enabled): Promise<void> {
+  console.log("get tokens prices info");
   const tokens = await TokenModel.find(
     {},
     { symbol: 1, isStable: 1, decimals: 1 }
@@ -43,7 +44,7 @@ async function getTokenPrices() {
             ? token1Liquidity / token2Liquidity
             : null;
 
-        if (price) {
+        if (price && data?.token2Symbol) {
           tokensObj[data.token2Symbol].priceUSD = price;
         }
       } else {
@@ -51,7 +52,7 @@ async function getTokenPrices() {
           token1Liquidity && token2Liquidity
             ? token2Liquidity / token1Liquidity
             : null;
-        if (price) {
+        if (price && data?.token1Symbol) {
           tokensObj[data.token1Symbol].priceUSD = price;
         }
       }
@@ -87,15 +88,18 @@ async function getTokenPrices() {
     }
   });
   Object.values(tokensObj).map((data) => {
-    if (data?.priceUSD) {
+    if (data?.priceUSD && data?.symbol) {
       updateTokenData({ symbol: data.symbol }, { priceUSD: data.priceUSD });
     }
   });
+  enabled.yieldsCrawler = true;
 }
 
-export default async function getTokenPricesCrawler() {
+export default async function getTokenPricesCrawler(
+  enabled: Enabled
+): Promise<void> {
   while (true) {
-    await getTokenPrices();
-    await wait(60000);
+    enabled.pricesCrawler && (await getTokenPrices(enabled));
+    await wait(20000);
   }
 }

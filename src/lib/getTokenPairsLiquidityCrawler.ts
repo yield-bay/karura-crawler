@@ -1,6 +1,7 @@
 import { ApiPromise } from "@polkadot/api";
 import TokenPairsModel from "../models/tokenPairs";
 import { wait } from "../utils";
+import { updateTokenPairsData } from "./getTokenPairsAndStatusesCrawler";
 
 interface TradingPair {
   Token: string;
@@ -10,25 +11,11 @@ interface Filter {
   symbol: string;
 }
 
-interface UpdateData {
-  token1Liquidity: string;
-  token2Liquidity: string;
-}
-
-async function updateTokenPairsData(
-  filter: Filter,
-  data: UpdateData
+async function getTokenPairsLiquidity(
+  api: ApiPromise,
+  enabled: Enabled
 ): Promise<void> {
-  try {
-    await TokenPairsModel.findOneAndUpdate(filter, data, { upsert: true });
-    // console.log("updated token pairs liquidity");
-  } catch (err) {
-    console.error(err);
-    throw new Error("Error while updating token pairs liquidity");
-  }
-}
-
-async function getTokenPairsLiquidity(api: ApiPromise) {
+  console.log("get token pairs liquidity info");
   const liquidity = await api.query.dex.liquidityPool.entries();
 
   liquidity.forEach(
@@ -52,11 +39,15 @@ async function getTokenPairsLiquidity(api: ApiPromise) {
       );
     }
   );
+  enabled.pricesCrawler = true;
 }
 
-export default async function getTokenPairsLiquidityCrawler(api: ApiPromise) {
+export default async function getTokenPairsLiquidityCrawler(
+  api: ApiPromise,
+  enabled: Enabled
+): Promise<void> {
   while (true) {
-    await getTokenPairsLiquidity(api);
-    await wait(30000);
+    enabled.liquidityCrawler && (await getTokenPairsLiquidity(api, enabled));
+    await wait(20000);
   }
 }
