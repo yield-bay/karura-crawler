@@ -13,6 +13,7 @@ interface TokensPairsObj {
 }
 
 async function getLPYields(api: ApiPromise) {
+  console.info("calculating LP yields");
   const tokens = await TokenModel.find(
     {},
     { symbol: 1, decimals: 1, priceUSD: 1 }
@@ -281,6 +282,116 @@ async function getLPYields(api: ApiPromise) {
       dailyAPR: ksmLksmdailyYield,
       incentives: [
         { token: "KAR", value: BigInt(ksmLksmIncentives).toString() },
+      ],
+    }
+  );
+
+  // KUSD-LKSM incentives every 5 blocks
+  const kusdLksmIncentives = await api.query.incentives.incentiveRewardAmounts(
+    {
+      Dex: { DexShare: [{ TOKEN: "KUSD" }, { TOKEN: "LKSM" }] },
+    },
+    { TOKEN: "KAR" }
+  );
+  // console.log(kusdLksmIncentives.toHuman());
+
+  const kusdLksmTvlUSD =
+    tokenPairsObj["KUSD-LKSM"].token1Liquidity &&
+    tokenPairsObj["KUSD-LKSM"].token2Liquidity &&
+    tokensObj[tokenPairsObj["KUSD-LKSM"].token1Symbol].priceUSD &&
+    tokensObj[tokenPairsObj["KUSD-LKSM"].token2Symbol].priceUSD
+      ? (Number(BigInt(tokenPairsObj["KUSD-LKSM"].token1Liquidity)) /
+          Math.pow(
+            10,
+            tokensObj[tokenPairsObj["KUSD-LKSM"].token1Symbol].decimals
+          )) *
+          tokensObj[tokenPairsObj["KUSD-LKSM"].token1Symbol].priceUSD +
+        (Number(BigInt(tokenPairsObj["KUSD-LKSM"].token2Liquidity)) /
+          Math.pow(
+            10,
+            tokensObj[tokenPairsObj["KUSD-LKSM"].token2Symbol].decimals
+          )) *
+          tokensObj[tokenPairsObj["KUSD-LKSM"].token2Symbol].priceUSD
+      : null;
+
+  // console.log("kusdLksmTvlUSD");
+  // console.log(kusdLksmTvlUSD);
+
+  const kusdLksmDailyIncentivesUSD =
+    (Number(BigInt(kusdLksmIncentives)) /
+      Math.pow(10, tokensObj["KAR"].decimals)) *
+    tokensObj["KAR"].priceUSD *
+    numberOf5BlocksPerDay;
+
+  const kusdLksmdailyYield =
+    (kusdLksmDailyIncentivesUSD / (kusdLksmTvlUSD + 1000)) * 100;
+
+  // console.log(kusdLksmDailyIncentivesUSD);
+  // console.log("kusdLksmdailyYield");
+  // console.log(kusdLksmdailyYield);
+
+  updateTokenPairsData(
+    { symbol: "KUSD-LKSM" },
+    {
+      tvlUSD: kusdLksmTvlUSD,
+      dailyAPR: kusdLksmdailyYield,
+      incentives: [
+        { token: "KAR", value: BigInt(kusdLksmIncentives).toString() },
+      ],
+    }
+  );
+
+  // KAR-KSM incentives every 5 blocks
+  const karLksmIncentives = await api.query.incentives.incentiveRewardAmounts(
+    {
+      Dex: { DexShare: [{ TOKEN: "KAR" }, { TOKEN: "LKSM" }] },
+    },
+    { TOKEN: "KAR" }
+  );
+  // console.log(karLksmIncentives.toHuman());
+
+  const karLksmTvlUSD =
+    tokenPairsObj["KAR-LKSM"].token1Liquidity &&
+    tokenPairsObj["KAR-LKSM"].token2Liquidity &&
+    tokensObj[tokenPairsObj["KAR-LKSM"].token1Symbol].priceUSD &&
+    tokensObj[tokenPairsObj["KAR-LKSM"].token2Symbol].priceUSD
+      ? (Number(BigInt(tokenPairsObj["KAR-LKSM"].token1Liquidity)) /
+          Math.pow(
+            10,
+            tokensObj[tokenPairsObj["KAR-LKSM"].token1Symbol].decimals
+          )) *
+          tokensObj[tokenPairsObj["KAR-LKSM"].token1Symbol].priceUSD +
+        (Number(BigInt(tokenPairsObj["KAR-LKSM"].token2Liquidity)) /
+          Math.pow(
+            10,
+            tokensObj[tokenPairsObj["KAR-LKSM"].token2Symbol].decimals
+          )) *
+          tokensObj[tokenPairsObj["KAR-LKSM"].token2Symbol].priceUSD
+      : null;
+
+  // console.log("karLksmTvlUSD");
+  // console.log(karLksmTvlUSD);
+
+  const karLksmDailyIncentivesUSD =
+    (Number(BigInt(karLksmIncentives)) /
+      Math.pow(10, tokensObj["KAR"].decimals)) *
+    tokensObj["KAR"].priceUSD *
+    numberOf5BlocksPerDay;
+
+  const karLksmdailyYield =
+    (karLksmDailyIncentivesUSD / (karLksmTvlUSD + 1000)) * 100;
+
+  // console.log(karLksmDailyIncentivesUSD);
+  // console.log("karLksmdailyYield");
+  // console.log(karLksmdailyYield);
+
+  updateTokenPairsData(
+    { symbol: "KAR-LKSM" },
+    {
+      tvlUSD: karLksmTvlUSD,
+      dailyAPR: karLksmdailyYield,
+      incentives: [
+        { token: "KAR", value: BigInt(karLksmIncentives).toString() },
       ],
     }
   );

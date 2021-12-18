@@ -27,8 +27,5 @@ export default {
     process.env.WS_PROVIDER_URL || "wss://karura.api.onfinality.io/public-ws",
 
   stableTokens: [process.env.KARURA_STABLE_TOKEN],
-  nativeTokens: [
-    process.env.KARURA_NATIVE_TOKEN,
-    process.env.KARURA_STABLE_TOKEN,
-  ],
+  nativeTokens: [process.env.KARURA_NATIVE_TOKEN],
 };
