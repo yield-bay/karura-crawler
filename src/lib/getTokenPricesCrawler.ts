@@ -63,7 +63,7 @@ async function getTokenPrices(
       tokensObj[tokenInfo.symbol].priceUSD = parameters.midPrice?.toNumber();
     } catch (error) {
       console.info(tokenInfo.symbol);
-      console.error(error?.name);
+      console.error("Error", error?.name);
       tokensObj[tokenInfo.symbol].priceUSD = undefined;
     }
   }
