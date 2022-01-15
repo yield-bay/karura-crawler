@@ -9,8 +9,12 @@
     "dev": "nodemon"
   },
   "dependencies": {
-    "@acala-network/api": "^3.0.2",
-    "@polkadot/api": "^6.11.1",
+    "@acala-network/api": "^4.0.1",
+    "@acala-network/sdk": "4.0.1",
+    "@acala-network/sdk-core": "4.0.1",
+    "@acala-network/sdk-swap": "4.0.1",
+    "@acala-network/sdk-wallet": "4.0.1",
+    "@polkadot/api": "^7.1.1",
     "@types/node": "^16.11.11",
     "bn.js": "^5.2.0",
     "dotenv": "^10.0.0",

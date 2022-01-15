@@ -1,6 +1,6 @@
 import { Schema, model } from "mongoose";
 
-const schema = new Schema<Token>(
+const schema = new Schema<TokenInfo>(
   {
     symbol: { type: String, required: true, unique: true },
     decimals: { type: Number, required: true },
@@ -11,6 +11,6 @@ const schema = new Schema<Token>(
   { timestamps: true }
 );
 
-const TokenModel = model<Token>("Token", schema);
+const TokenModel = model<TokenInfo>("tokens", schema);
 
 export default TokenModel;

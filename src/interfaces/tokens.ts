@@ -1,5 +1,5 @@
-interface Token {
-  symbol?: string;
+interface TokenInfo {
+  symbol: string;
   decimals?: number;
   isNative?: boolean;
   isStable?: boolean;

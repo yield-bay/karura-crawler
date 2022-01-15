@@ -1,13 +1,35 @@
 import TokenPairsModel from "../models/tokenPairs";
-import TokenModel from "../models/tokens";
+import TokenModel from "../models/tokenInfo";
 import { convertArrayToObject, wait } from "../utils";
 import { updateTokenData } from "./getTokens";
+import { SwapPromise } from "@acala-network/sdk-swap";
+import { FixedPointNumber, Token } from "@acala-network/sdk-core";
+import { SwapParameters } from "@acala-network/sdk-swap/swap-parameters";
+import { WalletPromise } from "@acala-network/sdk-wallet";
+import { ApiPromise } from "@polkadot/api";
+import tokenInfo from "../models/tokenInfo";
 
 interface TokensObj {
-  [key: string]: Token;
+  [key: string]: TokenInfo;
 }
 
-async function getTokenPrices(enabled: Enabled): Promise<void> {
+async function getSwapParameters(
+  path: [Token, Token],
+  supplyAmount: FixedPointNumber,
+  swapPromise: SwapPromise
+) {
+  const parameters: SwapParameters | undefined = await swapPromise.swap(
+    path,
+    supplyAmount,
+    "EXACT_INPUT"
+  );
+  return { ...parameters };
+}
+
+async function getTokenPrices(
+  api: ApiPromise,
+  enabled: Enabled
+): Promise<void> {
   console.log("get tokens prices info");
   const tokens = await TokenModel.find(
     {},
@@ -18,88 +40,51 @@ async function getTokenPrices(enabled: Enabled): Promise<void> {
 
   tokensObj["KUSD"].priceUSD = 1;
 
-  const tokenPairs = await TokenPairsModel.find(
-    {},
-    { createdAt: 0, updatedAt: 0 }
-  );
+  const swapPromise = new SwapPromise(api);
+  const walletPromise = new WalletPromise(api);
 
-  const tokensPairsWithKUSD = tokenPairs.filter(
-    (data) => data.token1Symbol === "KUSD" || data.token2Symbol === "KUSD"
-  );
+  const swapToken2 = walletPromise.getToken("KUSD");
 
-  tokensPairsWithKUSD.map((data) => {
-    const token1Liquidity = data?.token1Liquidity
-      ? Number(BigInt(data.token1Liquidity)) /
-        Math.pow(10, tokensObj[data?.token1Symbol].decimals)
-      : null;
-    const token2Liquidity = data?.token2Liquidity
-      ? Number(BigInt(data.token2Liquidity)) /
-        Math.pow(10, tokensObj[data?.token1Symbol].decimals)
-      : null;
+  const tokensWithoutKUSD = tokens.filter((data) => data.symbol !== "KUSD");
 
-    if (token1Liquidity && token2Liquidity) {
-      if (data.token1Symbol === "KUSD") {
-        const price =
-          token1Liquidity && token2Liquidity
-            ? token1Liquidity / token2Liquidity
-            : null;
-
-        if (price && data?.token2Symbol) {
-          tokensObj[data.token2Symbol].priceUSD = price;
-        }
-      } else {
-        const price =
-          token1Liquidity && token2Liquidity
-            ? token2Liquidity / token1Liquidity
-            : null;
-        if (price && data?.token1Symbol) {
-          tokensObj[data.token1Symbol].priceUSD = price;
-        }
-      }
+  for (let index = 0; index < tokensWithoutKUSD.length; index++) {
+    const tokenInfo = tokensWithoutKUSD[index];
+    const swapToken1 = walletPromise.getToken(tokenInfo.symbol);
+    const supplyAmount = new FixedPointNumber(1, swapToken1.decimal);
+    const swapPath = [swapToken1, swapToken2] as [Token, Token];
+    try {
+      const parameters = await getSwapParameters(
+        swapPath,
+        supplyAmount,
+        swapPromise
+      );
+      console.info(tokenInfo.symbol);
+      console.info(parameters.midPrice?.toNumber());
+      tokensObj[tokenInfo.symbol].priceUSD = parameters.midPrice?.toNumber();
+    } catch (error) {
+      console.info(tokenInfo.symbol);
+      console.error(error?.name);
+      tokensObj[tokenInfo.symbol].priceUSD = undefined;
     }
-  });
-  const tokensPairsWithoutKUSD = tokenPairs.filter(
-    (data) => !(data.token1Symbol === "KUSD" || data.token2Symbol === "KUSD")
-  );
+  }
 
-  tokensPairsWithoutKUSD.map((data) => {
-    const token1Liquidity = data?.token1Liquidity
-      ? Number(BigInt(data.token1Liquidity)) /
-        Math.pow(10, tokensObj[data?.token1Symbol].decimals)
-      : null;
-    const token2Liquidity = data?.token2Liquidity
-      ? Number(BigInt(data.token2Liquidity)) /
-        Math.pow(10, tokensObj[data?.token1Symbol].decimals)
-      : null;
-    if (token1Liquidity && token2Liquidity) {
-      if (!tokensObj[data.token1Symbol]?.priceUSD) {
-        if (tokensObj[data.token2Symbol]?.priceUSD) {
-          const exchangeRate1to2 = token2Liquidity / token1Liquidity;
-          tokensObj[data.token1Symbol].priceUSD =
-            tokensObj[data.token2Symbol].priceUSD * exchangeRate1to2;
-        }
-      } else if (!tokensObj[data.token2Symbol]?.priceUSD) {
-        if (tokensObj[data.token1Symbol]?.priceUSD) {
-          const exchangeRate1to2 = token2Liquidity / token1Liquidity;
-          tokensObj[data.token2Symbol].priceUSD =
-            tokensObj[data.token1Symbol].priceUSD / exchangeRate1to2;
-        }
-      }
-    }
-  });
   Object.values(tokensObj).map((data) => {
     if (data?.priceUSD && data?.symbol) {
-      updateTokenData({ symbol: data.symbol }, { priceUSD: data.priceUSD });
+      updateTokenData(
+        { symbol: data.symbol },
+        { symbol: data.symbol, priceUSD: data.priceUSD }
+      );
     }
   });
   enabled.yieldsCrawler = true;
 }
 
 export default async function getTokenPricesCrawler(
+  api: ApiPromise,
   enabled: Enabled
 ): Promise<void> {
   while (true) {
-    enabled.pricesCrawler && (await getTokenPrices(enabled));
+    enabled.pricesCrawler && (await getTokenPrices(api, enabled));
     await wait(20000);
   }
 }

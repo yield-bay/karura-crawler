@@ -57,6 +57,6 @@ export default async function startSubscriptions() {
 
   getTokenPairsAndStatusesCrawler(api, enabled);
   getTokenPairsLiquidityCrawler(api, enabled);
-  getTokenPricesCrawler(enabled);
+  getTokenPricesCrawler(api, enabled);
   getLPYieldsCrawler(api, enabled);
 }

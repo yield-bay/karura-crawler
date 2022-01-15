@@ -1,11 +1,11 @@
 import { ApiPromise } from "@polkadot/api";
 import TokenPairsModel from "../models/tokenPairs";
-import TokenModel from "../models/tokens";
+import TokenModel from "../models/tokenInfo";
 import { convertArrayToObject, wait } from "../utils";
 import { updateTokenPairsData } from "./getTokenPairsAndStatusesCrawler";
 
 interface TokensObj {
-  [key: string]: Token;
+  [key: string]: TokenInfo;
 }
 
 interface TokensPairsObj {

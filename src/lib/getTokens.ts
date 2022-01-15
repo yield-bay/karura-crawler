@@ -1,5 +1,5 @@
 import { ApiPromise } from "@polkadot/api";
-import TokenModel from "../models/tokens";
+import TokenModel from "../models/tokenInfo";
 import config from "../config";
 
 interface Filter {
@@ -8,7 +8,7 @@ interface Filter {
 
 export async function updateTokenData(
   filter: Filter,
-  data: Token
+  data: TokenInfo
 ): Promise<void> {
   try {
     await TokenModel.findOneAndUpdate(filter, data, { upsert: true });
@@ -29,7 +29,7 @@ export default async function getTokens(
     console.info(tokenSymbol);
     console.info(tokenDecimals);
     tokenSymbol?.map((token, index) => {
-      const info: Token = {
+      const info: TokenInfo = {
         symbol: token,
         decimals: tokenDecimals[index],
         isNative: config.nativeTokens.includes(token),
