@@ -8,7 +8,7 @@ interface Filter {
 
 export async function updateTokenData(
   filter: Filter,
-  data: TokenInfo
+  data: TokenInfo | { priceUSD?: number }
 ): Promise<void> {
   try {
     await TokenModel.findOneAndUpdate(filter, data, { upsert: true });

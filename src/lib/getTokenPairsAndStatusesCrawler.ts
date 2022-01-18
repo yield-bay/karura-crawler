@@ -12,7 +12,15 @@ interface Filter {
 
 export async function updateTokenPairsData(
   filter: Filter,
-  data: TokenPairs
+  data:
+    | TokenPairs
+    | {
+        token1Liquidity?: string;
+        token2Liquidity?: string;
+        tvlUSD?: number;
+        incentives?: { token: string; value: string }[];
+        dailyAPR?: number;
+      }
 ): Promise<void> {
   try {
     await TokenPairsModel.findOneAndUpdate(filter, data, { upsert: true });

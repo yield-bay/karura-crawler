@@ -61,19 +61,18 @@ async function getTokenPrices(
       console.info(tokenInfo.symbol);
       console.info(parameters.midPrice?.toNumber());
       tokensObj[tokenInfo.symbol].priceUSD = parameters.midPrice?.toNumber();
-    } catch (error) {
+    } catch (error: any) {
       console.info(tokenInfo.symbol);
-      console.error("Error", error?.name);
+      if (error?.name !== undefined) {
+        console.error("Error", error.name);
+      } else console.error(error);
       tokensObj[tokenInfo.symbol].priceUSD = undefined;
     }
   }
 
   Object.values(tokensObj).map((data) => {
     if (data?.priceUSD && data?.symbol) {
-      updateTokenData(
-        { symbol: data.symbol },
-        { symbol: data.symbol, priceUSD: data.priceUSD }
-      );
+      updateTokenData({ symbol: data.symbol }, { priceUSD: data.priceUSD });
     }
   });
   enabled.yieldsCrawler = true;
